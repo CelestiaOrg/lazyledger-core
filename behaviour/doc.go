@@ -2,7 +2,7 @@
 Package Behaviour provides a mechanism for reactors to report behaviour of peers.
 
 Instead of a reactor calling the switch directly it will call the behaviour module which will
-handle the stoping and marking peer as good on behalf of the reactor.
+handle the stopping and marking peer as good on behalf of the reactor.
 
 There are four different behaviours a reactor can report.
 

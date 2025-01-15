@@ -25,7 +25,7 @@ type messageOutOfOrder struct {
 	explanation string
 }
 
-// MessageOutOfOrder returns a messagOutOfOrder PeerBehaviour.
+// MessageOutOfOrder returns a messageOutOfOrder PeerBehaviour.
 func MessageOutOfOrder(peerID p2p.ID, explanation string) PeerBehaviour {
 	return PeerBehaviour{peerID: peerID, reason: messageOutOfOrder{explanation}}
 }
