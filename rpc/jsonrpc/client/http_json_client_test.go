@@ -44,6 +44,19 @@ func Test_parsedURL(t *testing.T) {
 	}
 
 	tests := map[string]test{
+		"http endpoint": {
+			url:                  "http://example.com",
+			expectedURL:          "http://example.com",
+			expectedHostWithPath: "example.com",
+			expectedDialAddress:  "example.com:80",
+		},
+
+		"http endpoint with port": {
+			url:                  "http://example.com:8080",
+			expectedURL:          "http://example.com:8080",
+			expectedHostWithPath: "example.com:8080",
+			expectedDialAddress:  "example.com:8080",
+		},
 		"unix endpoint": {
 			url:                  "unix:///tmp/test",
 			expectedURL:          "unix://.tmp.test",
@@ -51,21 +64,21 @@ func Test_parsedURL(t *testing.T) {
 			expectedDialAddress:  "/tmp/test",
 		},
 
-		"http endpoint": {
+		"https endpoint": {
 			url:                  "https://example.com",
 			expectedURL:          "https://example.com",
 			expectedHostWithPath: "example.com",
-			expectedDialAddress:  "example.com",
+			expectedDialAddress:  "example.com:443",
 		},
 
-		"http endpoint with port": {
+		"https endpoint with port": {
 			url:                  "https://example.com:8080",
 			expectedURL:          "https://example.com:8080",
 			expectedHostWithPath: "example.com:8080",
 			expectedDialAddress:  "example.com:8080",
 		},
 
-		"http path routed endpoint": {
+		"https path routed endpoint": {
 			url:                  "https://example.com:8080/rpc",
 			expectedURL:          "https://example.com:8080/rpc",
 			expectedHostWithPath: "example.com:8080/rpc",

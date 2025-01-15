@@ -24,8 +24,6 @@ const (
 	protoUNIX  = "unix"
 )
 
-//-------------------------------------------------------------
-
 // Parsed URL structure
 type parsedURL struct {
 	url.URL
@@ -87,13 +85,25 @@ func (u parsedURL) GetTrimmedHostWithPath() string {
 	return strings.ReplaceAll(u.GetHostWithPath(), "/", ".")
 }
 
-// GetDialAddress returns the endpoint to dial for the parsed URL
 func (u parsedURL) GetDialAddress() string {
-	// if it's not a unix socket we return the host, example: localhost:443
 	if !u.isUnixSocket {
-		return u.Host
+		host := u.Host
+		// Check if the host already includes a port
+		_, _, err := net.SplitHostPort(host)
+		if err != nil {
+			// Add the default port based on the scheme
+			switch u.Scheme {
+			case protoHTTP, protoWS:
+				host = net.JoinHostPort(host, "80")
+			case protoHTTPS, protoWSS:
+				host = net.JoinHostPort(host, "443")
+			default:
+				// Handle unsupported schemes explicitly
+				panic("unsupported scheme: " + u.Scheme)
+			}
+		}
+		return "[" + host + "]" // Explicitly wrap IPv6 addresses in brackets
 	}
-	// otherwise we return the path of the unix socket, ex /tmp/socket
 	return u.GetHostWithPath()
 }
 
