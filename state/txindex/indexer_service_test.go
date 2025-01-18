@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	db "github.com/cometbft/cometbft-db"
 	"github.com/stretchr/testify/require"
+
+	db "github.com/cometbft/cometbft-db"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
