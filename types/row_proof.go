@@ -42,6 +42,25 @@ func (rp RowProof) Validate(root []byte) error {
 	if len(rp.Proofs) != len(rp.RowRoots) {
 		return fmt.Errorf("the number of proofs %d must equal the number of row roots %d", len(rp.Proofs), len(rp.RowRoots))
 	}
+	if len(rp.Proofs) == 0 {
+		return fmt.Errorf("empty proofs")
+	}
+	firstProofIndex := rp.Proofs[0].Index
+	for i := 1; i < len(rp.Proofs); i++ {
+		if rp.Proofs[0].Total != rp.Proofs[i].Total {
+			return errors.New("proofs should have the same total")
+		}
+		if rp.Proofs[i].Index != firstProofIndex+1 {
+			return errors.New("proof indexes are not sequential")
+		}
+		firstProofIndex++
+	}
+	if int64(rp.StartRow) != rp.Proofs[0].Index {
+		return fmt.Errorf("invalid start row")
+	}
+	if int64(rp.EndRow) != rp.Proofs[len(rp.Proofs)-1].Index {
+		return fmt.Errorf("invalid end row")
+	}
 	if !rp.VerifyProof(root) {
 		return errors.New("row proof failed to verify")
 	}
