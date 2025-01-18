@@ -28,10 +28,7 @@ message Request {
     RequestSetOption          set_option           = 4;
     RequestInitChain          init_chain           = 5;
     RequestQuery              query                = 6;
-    RequestBeginBlock         begin_block          = 7;
     RequestCheckTx            check_tx             = 8;
-    RequestDeliverTx          deliver_tx           = 9;
-    RequestEndBlock           end_block            = 10;
     RequestCommit             commit               = 11;
     RequestListSnapshots      list_snapshots       = 12;
     RequestOfferSnapshot      offer_snapshot       = 13;
@@ -39,6 +36,7 @@ message Request {
     RequestApplySnapshotChunk apply_snapshot_chunk = 15;
     RequestPrepareProposal    prepare_proposal     = 16;
     RequestProcessProposal    process_proposal     = 17;
+    RequestFinalizeBlock       finalize_block        = 18;
   }
 }
 
@@ -83,6 +81,7 @@ message RequestQuery {
 }
 
 message RequestBeginBlock {
+  option deprecated = true;
   bytes                   hash                 = 1;
   tendermint.types.Header header               = 2 [(gogoproto.nullable) = false];
   LastCommitInfo          last_commit_info     = 3 [(gogoproto.nullable) = false];
@@ -100,11 +99,32 @@ message RequestCheckTx {
 }
 
 message RequestDeliverTx {
+  option deprecated = true;
   bytes tx = 1;
 }
 
 message RequestEndBlock {
+  option deprecated = true;
   int64 height = 1;
+}
+
+// RequestFinalizeBlock is a request to finalize the block.
+message RequestFinalizeBlock {
+  repeated bytes       txs                 = 1;
+  CommitInfo           decided_last_commit = 2 [(gogoproto.nullable) = false];
+  repeated Evidence misbehavior         = 3 [(gogoproto.nullable) = false];
+  // Merkle root hash of the fields of the decided block.
+  bytes                     hash   = 4;
+  int64                     height = 5;
+  google.protobuf.Timestamp time   = 6 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime)  = true
+  ];
+  bytes next_validators_hash = 7;
+  // address of the public key of the original proposer of the block.
+  bytes proposer_address = 8;
+  // If the node is syncing/replaying blocks - target height. If not, syncing_to == height.
+  int64 syncing_to_height = 9;
 }
 
 message RequestCommit {}
@@ -137,9 +157,9 @@ message RequestPrepareProposal {
   // BlockData is a slice of candidate transactions that may be included in a
   // block. BlockData is sent to the application so that the application can
   // filter and re-arrange the slice of candidate transactions.
-  tendermint.types.Data block_data = 1;
-  // BlockDataSize is the maximum size (in bytes) that BlockData should be.
-  int64 block_data_size = 2;
+  // tendermint.types.Data block_data = 1;
+  // // BlockDataSize is the maximum size (in bytes) that BlockData should be.
+  // int64 block_data_size = 2;
   // chain_id is a unique identifier for the blockchain network this proposal
   // belongs to (e.g. mocha-1).
   string chain_id = 3;
@@ -148,11 +168,36 @@ message RequestPrepareProposal {
   // time is the time that will end up in the header. This is the voting power
   // weighted median of the last commit.
   google.protobuf.Timestamp time = 5 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+  bytes next_validators_hash = 6;
+  // address of the public key of the validator proposing the block.
+  bytes proposer_address = 7;
+  // the modified transactions cannot exceed this size.
+  int64 max_tx_bytes = 8;
+  // txs is an array of transactions that will be included in a block,
+  // sent to the app for possible modifications.
+  repeated bytes txs = 9;
+
+  reserved 1,2;
 }
 
 message RequestProcessProposal {
-  tendermint.types.Header header     = 1 [(gogoproto.nullable) = false];
-  tendermint.types.Data   block_data = 2;
+  // tendermint.types.Header header     = 1 [(gogoproto.nullable) = false];
+  // tendermint.types.Data   block_data = 2;
+  repeated bytes       txs                 = 3;
+  CommitInfo           proposed_last_commit = 4  [(gogoproto.nullable) = false];
+  repeated Evidence misbehavior          = 5 [(gogoproto.nullable) = false];
+  // Merkle root hash of the fields of the proposed block.
+  bytes                     hash   = 6;
+  int64                     height = 7;
+  google.protobuf.Timestamp time   = 8 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime)  = true
+  ];
+  bytes next_validators_hash = 9;
+  // address of the public key of the original proposer of the block.
+  bytes proposer_address = 10;
+
+  reserved 1,2;
 }
 
 //----------------------------------------
@@ -167,10 +212,7 @@ message Response {
     ResponseSetOption          set_option           = 5;
     ResponseInitChain          init_chain           = 6;
     ResponseQuery              query                = 7;
-    ResponseBeginBlock         begin_block          = 8;
     ResponseCheckTx            check_tx             = 9;
-    ResponseDeliverTx          deliver_tx           = 10;
-    ResponseEndBlock           end_block            = 11;
     ResponseCommit             commit               = 12;
     ResponseListSnapshots      list_snapshots       = 13;
     ResponseOfferSnapshot      offer_snapshot       = 14;
@@ -178,6 +220,7 @@ message Response {
     ResponseApplySnapshotChunk apply_snapshot_chunk = 16;
     ResponsePrepareProposal    prepare_proposal     = 17;
     ResponseProcessProposal    process_proposal     = 18;
+    ResponseFinalizeBlock      finalize_block       = 19;
   }
 }
 
@@ -233,6 +276,7 @@ message ResponseQuery {
 }
 
 message ResponseBeginBlock {
+  option deprecated = true;
   repeated Event events = 1
       [(gogoproto.nullable) = false, (gogoproto.jsontag) = "events,omitempty"];
 }
@@ -270,12 +314,41 @@ message ResponseDeliverTx {
 }
 
 message ResponseEndBlock {
+  option deprecated = true;
   repeated ValidatorUpdate validator_updates       = 1 [(gogoproto.nullable) = false];
   ConsensusParams          consensus_param_updates = 2;
   repeated Event           events                  = 3
       [(gogoproto.nullable) = false, (gogoproto.jsontag) = "events,omitempty"];
   TimeoutsInfo timeouts = 4 [(gogoproto.nullable) = false];
 }
+
+// ResponseFinalizeBlock contains the result of executing the block.
+message ResponseFinalizeBlock {
+  // set of block events emitted as part of executing the block
+  repeated Event events = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag)  = "events,omitempty"
+  ];  // nondeterministic
+  // the result of executing each transaction including the events
+  // the particular transaction emitted. This should match the order
+  // of the transactions delivered in the block itself
+  repeated ResponseDeliverTx tx_results = 2;
+  // a list of updates to the validator set. These will reflect the validator set at current height + 2.
+  repeated ValidatorUpdate validator_updates = 3 [(gogoproto.nullable) = false];
+  // updates to the consensus params, if any.
+  ConsensusParams          consensus_param_updates = 4;
+  // app_hash is the hash of the applications' state which is used to confirm
+  // that execution of the transactions was deterministic.
+  // It is up to the application to decide which algorithm to use.
+  bytes app_hash = 5;
+  // delay between the time when this block is committed and the next height is started.
+  // previously `timeout_commit` in config.toml
+  google.protobuf.Duration next_block_delay = 6 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true
+  ];
+}
+
 
 message ResponseCommit {
   // reserve 1
@@ -320,7 +393,9 @@ message ResponseApplySnapshotChunk {
 }
 
 message ResponsePrepareProposal {
-  tendermint.types.Data block_data = 1;
+  // tendermint.types.Data block_data = 1;
+  repeated bytes txs = 2;
+  reserved 1;
 }
 
 message ResponseProcessProposal {
