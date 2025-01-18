@@ -1,0 +1,23 @@
+name: buf-release
+on:
+  push:
+    tags:
+      - "v*"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          version: "1.44.0"
+      # Push the protobuf definitions to the BSR
+      - uses: bufbuild/buf-push-action@v1
+        with:
+          buf_token: ${{ secrets.BUF_TOKEN }}
+      - name: "push the tag label to BSR"
+        run: |
+          set -euo pipefail
+          echo ${{ secrets.BUF_TOKEN }} | buf registry login --token-stdin
+          buf push --label ${{ github.ref_name }}

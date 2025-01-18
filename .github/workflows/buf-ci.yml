@@ -1,0 +1,20 @@
+name: buf-ci
+on:
+  push:
+    branches:
+      - main
+      - "v[0-9]+.x"
+  pull_request:
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  buf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-breaking-action@v1
+        with:
+          against: 'https://github.com/celestiaorg/celestia-core.git#branch=v0.34.x-celestia'
+      - uses: bufbuild/buf-lint-action@v1

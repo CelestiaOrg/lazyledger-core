@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/tendermint/tendermint
+name: buf.build/celestiaorg/celestia-core
 deps:
   - buf.build/gogo/protobuf
 breaking:
