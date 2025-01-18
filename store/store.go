@@ -494,33 +494,56 @@ func (bs *BlockStore) Close() error {
 
 //-----------------------------------------------------------------------------
 
+// Key prefixes for different types of data
+const (
+	// Key prefixes
+	blockMetaPrefix  = "H"   // Height -> BlockMeta
+	blockPartPrefix  = "P"   // Height + index -> Block Part
+	blockCommitPrefix = "C"  // Height -> Commit
+	seenCommitPrefix = "SC"  // Height -> Seen Commit
+	blockHashPrefix  = "BH"  // Hash -> Height
+	txHashPrefix     = "TH"  // Hash -> TxInfo
+	stateKey        = "blockStore" // Fixed key for block store state
+)
+
+// calcBlockMetaKey returns the key for storing block meta information.
+// The key format is "H:{height}".
 func calcBlockMetaKey(height int64) []byte {
-	return []byte(fmt.Sprintf("H:%v", height))
+	return []byte(fmt.Sprintf("%s:%d", blockMetaPrefix, height))
 }
 
+// calcBlockPartKey returns the key for storing a block part.
+// The key format is "P:{height}:{partIndex}".
 func calcBlockPartKey(height int64, partIndex int) []byte {
-	return []byte(fmt.Sprintf("P:%v:%v", height, partIndex))
+	return []byte(fmt.Sprintf("%s:%d:%d", blockPartPrefix, height, partIndex))
 }
 
+// calcBlockCommitKey returns the key for storing block commit information.
+// The key format is "C:{height}".
 func calcBlockCommitKey(height int64) []byte {
-	return []byte(fmt.Sprintf("C:%v", height))
+	return []byte(fmt.Sprintf("%s:%d", blockCommitPrefix, height))
 }
 
+// calcSeenCommitKey returns the key for storing seen commit information.
+// The key format is "SC:{height}".
 func calcSeenCommitKey(height int64) []byte {
-	return []byte(fmt.Sprintf("SC:%v", height))
+	return []byte(fmt.Sprintf("%s:%d", seenCommitPrefix, height))
 }
 
+// calcBlockHashKey returns the key for storing block hash to height mapping.
+// The key format is "BH:{hex(hash)}".
 func calcBlockHashKey(hash []byte) []byte {
-	return []byte(fmt.Sprintf("BH:%x", hash))
+	return []byte(fmt.Sprintf("%s:%x", blockHashPrefix, hash))
 }
 
+// calcTxHashKey returns the key for storing transaction information.
+// The key format is "TH:{hex(hash)}".
 func calcTxHashKey(hash []byte) []byte {
-	return []byte(fmt.Sprintf("TH:%x", hash))
+	return []byte(fmt.Sprintf("%s:%x", txHashPrefix, hash))
 }
 
-//-----------------------------------------------------------------------------
-
-var blockStoreKey = []byte("blockStore")
+// blockStoreKey is the fixed key for storing BlockStoreState
+var blockStoreKey = []byte(stateKey)
 
 // SaveBlockStoreState persists the blockStore state to the database.
 func SaveBlockStoreState(bsj *cmtstore.BlockStoreState, db dbm.DB) {
