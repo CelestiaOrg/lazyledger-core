@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.45
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/btcsuite/btcd/btcutil v1.1.3
-	github.com/celestiaorg/nmt v0.22.2
+	github.com/celestiaorg/nmt v0.22.3
 	github.com/cometbft/cometbft-db v0.7.0
 	github.com/cometbft/cometbft-load-test v0.3.0
 	github.com/fortytw2/leaktest v1.3.0
